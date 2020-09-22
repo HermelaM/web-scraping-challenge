@@ -5,22 +5,11 @@ from selenium import webdriver
 import pandas as pd
 
 #scraping all
-def scrape_all()
+def scrape_all():
     browser = Browser("chrome", executable_path="chromedriver", headless=True)
-    news_title, news_paragraph = mars_news(browser)
+    news_title, news_para = mars_news(browser)
 
-data = { 
-    "news_title": news_title,
-    "news_paragraph": news_paragraph,
-    "featured_image": featured_image(browser),
-    "hemispheres": hemispheres(browser),
-    "weather": twitter_weather(browser),
-    "facts": mars_facts(),
-    "last_modified": dt.datetime.now()
-    }
-    # Stop webdriver and return data
-    browser.quit()
-    return data
+   
 
 def mars_news(browser):
     url = 'https://mars.nasa.gov/news/'
@@ -30,15 +19,15 @@ def mars_news(browser):
     html = browser.html
     soup = BeautifulSoup(html, 'html.parser')
 
-try:
-    slide_element = soup.select_one("ul.item_list li.slide")
-    slide_element.find("div", class_="content_title")
+    try:
+        slide_element = soup.select_one("ul.item_list li.slide")
+        slide_element.find("div", class_="content_title")
 
-    news_title = slide_element.find("div", class_="content_title").get_text()
-    news_para = slide_element.find('div', class_="article_teaser_body").get_text()
+        news_title = slide_element.find("div", class_="content_title").get_text()
+        news_para = slide_element.find('div', class_="article_teaser_body").get_text()
 
     except AttributeError:
-        return None, None
+        return None
 
     return news_title, news_para
 
@@ -60,13 +49,13 @@ def featured_image(browser):
 
     img_url_rel = img_soup.select_one('figure.lede a img').get("src")
    
-try: 
-     img_url = img.get("src")
+    try: 
+        img_url = img_url_rel.get("src")
     except AttributeError:
         return None 
     
- img_url = f'https://www.jpl.nasa.gov{img_url_rel}'
- return img_url
+    img_url_rel = f"https://www.jpl.nasa.gov{img_url_rel}"
+    return img_url
 
 # Mars Facts Web Scraper
 def mars_facts():
@@ -92,25 +81,25 @@ def hemisphere(browser):
     links = browser.find_by_css("a.product-item h3")
 
 # loop through hemispheres 
-for item in range(len(links)):
-    hemisphere = {}
-    
-    # Find Element on Each Loop to Avoid a Stale Element Exception
-    browser.find_by_css("a.product-item h3")[item].click()
-    
-    # Find Sample Image Anchor Tag & Extract <href>
-    sample_element = browser.find_link_by_text("Sample").first
-    hemisphere["img_url"] = sample_element["href"]
-    
-    # Get hemisphere title
-    hemisphere["title"] = browser.find_by_css("h2.title").text
-    
-    # Append hemisphere Object to List
-    hemisphere_image_urls.append(hemisphere)
-    
-    # Navigate backwards
-    browser.back()
- return hemisphere_image_urls
+    for item in range(len(links)):
+        hemisphere = {}
+        
+        # Find Element on Each Loop to Avoid a Stale Element Exception
+        browser.find_by_css("a.product-item h3")[item].click()
+        
+        # Find Sample Image Anchor Tag & Extract <href>
+        sample_element = browser.find_link_by_text("Sample").first
+        hemisphere["img_url"] = sample_element["href"]
+        
+        # Get hemisphere title
+        hemisphere["title"] = browser.find_by_css("h2.title").text
+        
+        # Append hemisphere Object to List
+        hemisphere_image_urls.append(hemisphere)
+        
+        # Navigate backwards
+        browser.back()
+    return hemisphere_image_urls
 
 
 
