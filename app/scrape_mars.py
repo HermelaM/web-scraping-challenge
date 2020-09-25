@@ -3,33 +3,27 @@ from splinter.exceptions import ElementDoesNotExist
 from bs4 import BeautifulSoup
 from selenium import webdriver
 import pandas as pd
+import datetime as dt
+import time
 
-#scraping all
-def scrape_all():
-    browser = Browser("chrome", executable_path="chromedriver", headless=True)
-    news_title, news_para = mars_news(browser)
-
-   
+#executable_path = {'executable_path':"C:\\Users\\Hermela\\Documents\\bootcamp\\web-scraping-challenge\\app\\chromedriver.exe"}
+#browser = Browser("chrome", **executable_path, headless=False)
 
 def mars_news(browser):
+    executable_path = {'executable_path':"C:\\Users\\Hermela\\Documents\\bootcamp\\web-scraping-challenge\\app\\chromedriver.exe"}
+    return Browser("chrome", **executable_path, headless=False)
+    mars = {}
+
     url = 'https://mars.nasa.gov/news/'
     browser.visit(url)
-
 
     html = browser.html
     soup = BeautifulSoup(html, 'html.parser')
 
-    try:
-        slide_element = soup.select_one("ul.item_list li.slide")
-        slide_element.find("div", class_="content_title")
+    mars["news_title"] = soup.find("a", class_="content_title").get_text()
+    mars["news_paragraph"] = soup.find('a', class_="article_teaser_body").get_text()
 
-        news_title = slide_element.find("div", class_="content_title").get_text()
-        news_para = slide_element.find('div', class_="article_teaser_body").get_text()
-
-    except AttributeError:
-        return None
-
-    return news_title, news_para
+    return mars
 
 def featured_image(browser):
     url = 'https://www.jpl.nasa.gov/spaceimages/?search=&category=Mars'
@@ -52,7 +46,7 @@ def featured_image(browser):
     try: 
         img_url = img_url_rel.get("src")
     except AttributeError:
-        return None 
+        return None
     
     img_url_rel = f"https://www.jpl.nasa.gov{img_url_rel}"
     return img_url
@@ -101,8 +95,40 @@ def hemisphere(browser):
         browser.back()
     return hemisphere_image_urls
 
+def scrape_hemisphere(html_text):
+    hemisphere_soup = BeautifulSoup(html_text, "html.parser")
+    try: 
+        title_element = hemisphere_soup.find("h2", class_="title").get_text()
+        sample_element = hemisphere_soup.find("a", text="Sample").get("href")
+    except AttributeError:
+        title_element = None
+        sample_element = None 
+    hemisphere = {
+        "title": title_element,
+        "img_url": sample_element
+    }
+    return hemisphere
 
+
+def scrape_all():
+
+    # Initiate headless driver for deployment
+    browser = Browser("chrome", executable_path="chromedriver", headless=True)
+    news_title, news_paragraph = mars_news(browser)
+
+    # Run all scraping functions and store in dictionary.
+    data = {
+        "news_title": news_title,
+        "news_paragraph": news_paragraph,
+        "featured_image": featured_image(browser),
+        "hemispheres": hemispheres(browser),
+        "facts": mars_facts(),
+        "last_modified": dt.datetime.now()
+    }
+     # Stop webdriver and return data
+    browser.quit()
+    return data
+   
 
 if __name__ == "__main__":
     print(scrape_all())
-
